@@ -24,6 +24,7 @@ Before commiting always format code with an autoformatter.
 In pycharm  Ctrl+Alt+L on Windows and Linux or ⌘⌥L on macOS.
 
 Also check for lint errors with pylint or the built-in linter.
+On github after every commit, pylint is run, try to fix all errors before merging.
 
 ## Assignment: Fine-grained classification
 Fine-grained classification in Neural Networks for Computer Vision
