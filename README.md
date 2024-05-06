@@ -4,6 +4,8 @@ Machine learning class project at Unitn.
 ## Project
 The models are in the models directory, each model is its own python file. Common functionality can be extracted to a seperate file or to `models/__init__.py`
 
+The data directory contains all the training and testing images.
+
 The requirements.txt file contains all the dependencies of the project, if you add a new dependency please update it. (For now it only includes the cpu version of pytorch.)
 
 To install the dependencies in your virtual environment run the following commands from the root directory of the project:
