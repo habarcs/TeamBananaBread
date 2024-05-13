@@ -10,6 +10,11 @@ DATA_DIR = (Path(__file__).parent.parent / "data").resolve()
 
 
 def get_dataset() -> Dataset:
+    """
+    Creates a dataset that is a combination of multiple online datasets.
+    :return: concatenated dataset
+    """
+
     fgvca = built_in_datasets.FGVCAircraft(
         root=DATA_DIR,
         download=True
