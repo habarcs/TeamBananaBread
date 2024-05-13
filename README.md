@@ -56,8 +56,7 @@ diverse set of examples to generalize better to
 unseen data.
 
 # Research papers
-- [Fine grained classification survey](https://arxiv.org/pdf/2111.06119)
+- [Fine-grained classification survey](https://arxiv.org/pdf/2111.06119)
 - [Awesome Fine-Grained Image Analysis](http://www.weixiushen.com/project/Awesome_FGIA/Awesome_FGIA.html)
 - [Github page for FGIA](https://github.com/arkel23/AFGIC)
 - [Papers with code, methods, data, very useful website](https://paperswithcode.com/task/fine-grained-image-classification)
-- 
