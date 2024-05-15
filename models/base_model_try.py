@@ -1,8 +1,9 @@
 """
 Trying out general image-classification network on fine-grained classification problems
 """
+import torch
 from torch import nn
-from torchvision import models, datasets
+from torchvision import models, datasets, transforms
 from torch.utils.data import DataLoader
 
 from utils import get_project_root
@@ -10,42 +11,47 @@ from utils import get_project_root
 DATA_SET_ROOT = get_project_root() / "data"
 ALEX_NET_OG_BATCH_SIZE = 128
 ALEX_NET_OG_DROPOUT = 0.5
+ALEX_NET_OG_LEARNING_RATE = 1e-3  # it used decaying learning rate
+# ALEX_NET_OG_MOMENTUM = 0.9
+EPOCHS = 90
+NUMBER_OF_CLASSES = 100  # depends on the dataset, for FGVCA aircraft it is 100
 
-train_data = datasets.FGVCAircraft(
+label_transformer = transforms.Lambda(lambda y: torch.zeros(NUMBER_OF_CLASSES, dtype=torch.float)
+                                      .scatter_(0, torch.tensor(y), value=1))
+
+image_transformer = transforms.Compose([
+    transforms.Resize(size=(227, 227)),
+    transforms.ToTensor()
+])
+
+trainval_data = datasets.FGVCAircraft(
     root=DATA_SET_ROOT,
-    split="train",
+    split="trainval",
     annotation_level="variant",
     download=True,
-    transform=None,
-    target_transform=None
+    transform=image_transformer,
+    target_transform=label_transformer
 )
-train_dataloader = DataLoader(train_data, batch_size=ALEX_NET_OG_BATCH_SIZE, shuffle=True)
-
-val_data = datasets.FGVCAircraft(
-    root=DATA_SET_ROOT,
-    split="val",
-    annotation_level="variant",
-    download=True,
-    transform=None,
-    target_transform=None
-)
-val_dataloader = DataLoader(val_data, batch_size=ALEX_NET_OG_BATCH_SIZE, shuffle=True)
+trainval_dataloader = DataLoader(trainval_data, batch_size=ALEX_NET_OG_BATCH_SIZE, shuffle=True)
 
 test_data = datasets.FGVCAircraft(
     root=DATA_SET_ROOT,
     split="test",
     annotation_level="variant",
     download=True,
-    transform=None,
-    target_transform=None
+    transform=image_transformer,
+    target_transform=label_transformer
 )
 test_dataloader = DataLoader(test_data, batch_size=ALEX_NET_OG_BATCH_SIZE, shuffle=True)
-
 
 # we load the alexnet model with pretrained weights
 alex_net = models.alexnet(
     weights=models.AlexNet_Weights.DEFAULT
 )
+
+# here we set the weights of the model not trainable
+for param in alex_net.parameters(recurse=True):
+    param.requires_grad = False
 
 # we want to use Alexnet feature extractor, but with a different classifier, that takes into account
 # the classes we have, so we replace the original with a new one
@@ -56,10 +62,59 @@ alex_net.classifier = nn.Sequential(
     nn.Dropout(p=ALEX_NET_OG_DROPOUT),
     nn.Linear(4096, 4096),
     nn.ReLU(inplace=True),
-    nn.Linear(4096, len(train_data.classes)),
+    nn.Linear(4096, NUMBER_OF_CLASSES),
 )
 
-# here we set the other parts of the model not trainable, so they stay the same
-# and only the new classificator is changed
-alex_net.features.train(False)
-alex_net.avgpool.train(False)
+
+# this is copied from pytorch tutorial, seems general enough
+def train_loop(dataloader, model, loss_fn, optimizer):
+    size = len(dataloader.dataset)
+    # Set the model to training mode - important for batch normalization and dropout layers
+    # Unnecessary in this situation but added for best practices
+    model.train()
+    for batch, (X, y) in enumerate(dataloader):
+        # Compute prediction and loss
+        pred = model(X)
+        loss = loss_fn(pred, y)
+
+        # Backpropagation
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+        if batch % 100 == 0:
+            loss, current = loss.item(), batch * dataloader.batch_size + len(X)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+
+# this is copied from pytorch tutorial, seems general enough
+def test_loop(dataloader, model, loss_fn):
+    # Set the model to evaluation mode - important for batch normalization and dropout layers
+    # Unnecessary in this situation but added for best practices
+    model.eval()
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    test_loss, correct = 0, 0
+
+    # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
+    # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
+    with torch.no_grad():
+        for X, y in dataloader:
+            pred = model(X)
+            test_loss += loss_fn(pred, y).item()
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+
+    test_loss /= num_batches
+    correct /= size
+    print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+
+
+# Now comes the training
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(alex_net.parameters(), lr=ALEX_NET_OG_LEARNING_RATE)
+
+for t in range(EPOCHS):
+    print(f"Epoch {t + 1}\n-------------------------------")
+    train_loop(trainval_dataloader, alex_net, loss_fn, optimizer)
+    test_loop(test_dataloader, alex_net, loss_fn)
+print("Done!")
