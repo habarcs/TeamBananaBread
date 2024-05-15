@@ -11,17 +11,20 @@ from utils import get_project_root
 DATA_SET_ROOT = get_project_root() / "data"
 ALEX_NET_OG_BATCH_SIZE = 128
 ALEX_NET_OG_DROPOUT = 0.5
-ALEX_NET_OG_LEARNING_RATE = 1e-3  # it used decaying learning rate
-# ALEX_NET_OG_MOMENTUM = 0.9
+ALEX_NET_OG_WEIGHT_DECAY = 1e-4
+ALEX_NET_OG_LEARNING_RATE = 1e-2  # it used decaying learning rate
+ALEX_NET_OG_MOMENTUM = 0.9
 EPOCHS = 90
 NUMBER_OF_CLASSES = 100  # depends on the dataset, for FGVCA aircraft it is 100
+DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 label_transformer = transforms.Lambda(lambda y: torch.zeros(NUMBER_OF_CLASSES, dtype=torch.float)
                                       .scatter_(0, torch.tensor(y), value=1))
 
 image_transformer = transforms.Compose([
     transforms.Resize(size=(227, 227)),
-    transforms.ToTensor()
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
 trainval_data = datasets.FGVCAircraft(
@@ -40,7 +43,7 @@ test_data = datasets.FGVCAircraft(
     annotation_level="variant",
     download=True,
     transform=image_transformer,
-    target_transform=label_transformer
+    target_transform=None
 )
 test_dataloader = DataLoader(test_data, batch_size=ALEX_NET_OG_BATCH_SIZE, shuffle=True)
 
@@ -73,6 +76,8 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     # Unnecessary in this situation but added for best practices
     model.train()
     for batch, (X, y) in enumerate(dataloader):
+        X.to(DEVICE)
+        y.to(DEVICE)
         # Compute prediction and loss
         pred = model(X)
         loss = loss_fn(pred, y)
@@ -100,6 +105,8 @@ def test_loop(dataloader, model, loss_fn):
     # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
     with torch.no_grad():
         for X, y in dataloader:
+            X.to(DEVICE)
+            y.to(DEVICE)
             pred = model(X)
             test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
@@ -111,7 +118,9 @@ def test_loop(dataloader, model, loss_fn):
 
 # Now comes the training
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(alex_net.parameters(), lr=ALEX_NET_OG_LEARNING_RATE)
+optimizer = torch.optim.SGD(alex_net.parameters(), lr=ALEX_NET_OG_LEARNING_RATE,
+                            momentum=ALEX_NET_OG_MOMENTUM, weight_decay=ALEX_NET_OG_WEIGHT_DECAY)
+alex_net.to(DEVICE)
 
 for t in range(EPOCHS):
     print(f"Epoch {t + 1}\n-------------------------------")
