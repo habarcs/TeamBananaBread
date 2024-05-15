@@ -21,11 +21,7 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 label_transformer = transforms.Lambda(lambda y: torch.zeros(NUMBER_OF_CLASSES, dtype=torch.float)
                                       .scatter_(0, torch.tensor(y), value=1))
 
-image_transformer = transforms.Compose([
-    transforms.Resize(size=(227, 227)),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-])
+image_transformer = models.AlexNet_Weights.DEFAULT.transforms()
 
 trainval_data = datasets.FGVCAircraft(
     root=DATA_SET_ROOT,
