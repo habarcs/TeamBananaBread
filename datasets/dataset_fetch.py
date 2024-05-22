@@ -1,12 +1,13 @@
 """
 This python package defines the dataloaders used for testing and training
+,.boygoyg
 """
-from pathlib import Path
+from utils import get_project_root
 
 from torchvision import datasets as built_in_datasets
 from torch.utils.data.dataset import Dataset, ConcatDataset
 
-DATA_DIR = (Path(__file__).parent.parent / "data").resolve()
+DATA_DIR = get_project_root() / "data"
 
 ## Trying out github
 
