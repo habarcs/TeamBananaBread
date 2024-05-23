@@ -1,10 +1,13 @@
 #Trying out Subset Feature, second try with a bit of chat gpt help
+import os
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, models, transforms
 from torch.utils.data import DataLoader
+
+from utils import get_project_root
 
 #The data_transforms dictionary contains two keys: 'train' and 'val', each associated with a transforms.Compose object.
 # This object is a sequential container that applies a list of transformations to the data.
@@ -26,26 +29,59 @@ data_transforms = {
 
 # This section of the code below is responsible for loading the data, applying the transformations,
 # and setting up the data loaders for training and validation
+DATA_SET_ROOT= get_project_root() / "data"
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+def hotoneencoding(y:int) -> torch.Tensor:
+    return torch.zeros(100, dtype=torch.float).scatter_(0, torch.tensor(y), value=1)
 
-#TODO change root directory to data set
-data_dir = 'path_to_data' #this line specifies the root directory where the dataset is stored.
+# label_transformer = transforms.Lambda(hotoneencoding)
 
-#this dictionary comprehension creates a dataset for both the training and validation sets
-# using the ImageFolder class from torchvision.datasets.
-#TODO change the image folder to the one we want
-image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ['train', 'val']}
-#os.path.join(data_dir, x): Constructs the path to the dataset directories, e.g., path_to_data/train and path_to_data/val.
-#data_transforms[x]: Applies the appropriate transformations (train or val) to the dataset
+image_transformer = models.AlexNet_Weights.DEFAULT.transforms()
 
-dataloaders = {x: DataLoader(image_datasets[x], batch_size=32, shuffle=True, num_workers=4) for x in ['train', 'val']}
-#This dictionary comprehension creates data loaders for both the training and validation datasets
-# num_workers=4: Number of subprocesses to use for data loading. More workers can speed up data loading but requires more CPU resources.
+train_data = datasets.FGVCAircraft(
+    root=DATA_SET_ROOT,
+    split="train",
+    annotation_level="variant",
+    download=True,
+    transform=image_transformer,
+    target_transform=None
+)
+train_dataloader = DataLoader(train_data, batch_size=64, shuffle=True)
+
+val_data = datasets.FGVCAircraft(
+    root=DATA_SET_ROOT,
+    split="val",
+    annotation_level="variant",
+    download=True,
+    transform=image_transformer,
+    target_transform=None
+)
+val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
+
+test_data = datasets.FGVCAircraft(
+    root=DATA_SET_ROOT,
+    split="test",
+    annotation_level="variant",
+    download=True,
+    transform=image_transformer,
+    target_transform=None
+)
+test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
+
+
+
 #TODO CAN THIS BE CHANGED TO GPU?
 
-dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
+#This creates a dictionary that the code that chatgpt can use.
+dataset_sizes = {label: len(data) for label, data in {'train': train_data, 'val': val_data}.items()}
+dataloaders = {
+    "train": train_dataloader,
+    "val": val_dataloader,
+    "test": test_dataloader
+}
 #This dictionary comprehension computes the size (number of images) of both the training and validation datasets.
 
-class_names = image_datasets['train'].classes
+class_names = train_data.classes
 #Purpose: Extracts the class names from the training dataset.
 #image_datasets['train'].classes: The ImageFolder class automatically assigns a list of class names based on the
 # sub-directory names. For instance, if the training dataset has sub-directories named 'dog' and 'cat', classes will be ['cat', 'dog']
@@ -61,7 +97,7 @@ class SubsetFeatureLearningModel(nn.Module):
     #Inheritance from nn.Module: The model inherits from torch.nn.Module, which is the base class for all neural network modules in PyTorch.
     def __init__(self, num_classes, subset_classes):
         super(SubsetFeatureLearningModel, self).__init__()
-        self.backbone = models.resnet50(pretrained=True)
+        self.backbone = models.resnet50(pretrained=True) #feature extractor
         num_ftrs = self.backbone.fc.in_features
         self.backbone.fc = nn.Identity()  # Removing the original classifier
 
