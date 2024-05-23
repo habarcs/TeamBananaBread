@@ -9,7 +9,6 @@ from torch.utils.data.dataset import Dataset, ConcatDataset
 
 DATA_DIR = get_project_root() / "data"
 
-## Trying out github
 
 def get_dataset() -> Dataset:
     """
