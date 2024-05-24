@@ -1,4 +1,4 @@
- """
+"""
 Trying out general image-classification network on fine-grained classification problems
 """
 import torch
@@ -18,9 +18,6 @@ EPOCHS = 90
 NUMBER_OF_CLASSES = 100  # depends on the dataset, for FGVCA aircraft it is 100
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-label_transformer = transforms.Lambda(lambda y: torch.zeros(NUMBER_OF_CLASSES, dtype=torch.float)
-                                      .scatter_(0, torch.tensor(y), value=1))
-
 image_transformer = models.AlexNet_Weights.DEFAULT.transforms()
 
 trainval_data = datasets.FGVCAircraft(
@@ -29,7 +26,7 @@ trainval_data = datasets.FGVCAircraft(
     annotation_level="variant",
     download=True,
     transform=image_transformer,
-    target_transform=label_transformer
+    target_transform=None
 )
 trainval_dataloader = DataLoader(trainval_data, batch_size=ALEX_NET_OG_BATCH_SIZE, shuffle=True)
 

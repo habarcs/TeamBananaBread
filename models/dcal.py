@@ -13,7 +13,6 @@ from torch.utils.data.dataloader import DataLoader
 from torch import nn
 from utils import get_project_root
 
-model = vit_b_16(representation_size=100)  # we force it to be 100 classes because we are using the airplane data set
 # now we do data loading part
 data_set_train = FGVCAircraft(root=get_project_root() / "data",
                               split="train",
@@ -31,6 +30,10 @@ data_set_test = FGVCAircraft(root=get_project_root() / "data",
 data_loader_train = DataLoader(batch_size=69, shuffle=True, dataset=data_set_train)
 
 data_loader_test = DataLoader(batch_size=69, shuffle=True, dataset=data_set_test)
+
+model = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
+model.heads = nn.Linear(model.hidden_dim, len(data_set_train.classes)) # we force it to be 100 classes# because we are using the airplane data set
+
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
                             momentum=0.9, weight_decay=1e-4)
@@ -38,12 +41,11 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
 for batch, (X, y) in enumerate(data_loader_train):
     size = len(data_loader_train.dataset)
     model.train()
-    pred = model(X) # we get the prediction by giving the model X (our images)
-    loss = loss_fn(pred, y) # we get loss by using loss fn giving it the label prediction and the original label
+    pred = model(X)  # we get the prediction by giving the model X (our images)
+    loss = loss_fn(pred, y)  # we get loss by using loss fn giving it the label prediction and the original label
     loss.backward()
     optimizer.step()
     optimizer.zero_grad()
 
-    if batch % 10 == 0:
-        loss, current = loss.item(), batch * data_loader_train.batch_size + len(X)
-        print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+    loss, current = loss.item(), batch * data_loader_train.batch_size + len(X)
+    print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
