@@ -18,7 +18,7 @@ def main():
 
     # Now comes the training
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4, amsgrad=False)
+    optimizer = optim.AdamW(model.parameters(), lr=1e-2, weight_decay=1e-4, amsgrad=False)
     scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=50, eta_min=1e-7, last_epoch=-1)
 
     for t in range(EPOCHS):

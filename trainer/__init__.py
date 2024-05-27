@@ -20,18 +20,16 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
             optimizer.zero_grad()
             pred = model(X)
             loss = loss_fn(pred, y)
-            # Backpropagation
-            loss.backward()
-            optimizer.step()
         else:  # handles multiple classifiers, by doing a gradient descent on each of them
             preds = model(X)[:num_classifiers]
-            loss = 0
+            loss = torch.tensor(0.0)
             for pred in reversed(preds):
                 optimizer.zero_grad()
-                single_loss = loss_fn(pred, y) * 1
-                single_loss.backward()
-                optimizer.step()
-                loss += single_loss.item()
+                loss += loss_fn(pred, y)
+
+        # Backpropagation
+        loss.backward()
+        optimizer.step()
 
         if batch % 20 == 0:
             loss, current = loss.item(), batch * dataloader.batch_size + len(X)
