@@ -1,9 +1,8 @@
-import torchvision.models.swin_transformer
 from torch import nn, optim
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
 
-from datasets.dataset_fetch import get_fgvca_data_loader
+from datasets.dataset_fetch import get_fgvca_train_data_loader, get_fgvca_test_data_loader
 from models.HERBS import HERBS
 from trainer import DEVICE, train_loop, test_loop
 
@@ -12,7 +11,8 @@ BATCH_SIZE = 32
 
 
 def main():
-    train_loader, test_loader = get_fgvca_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
+    train_loader = get_fgvca_train_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
+    test_loader = get_fgvca_test_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
     model = HERBS(len(train_loader.dataset.classes))
     model.to(DEVICE)
 
@@ -30,5 +30,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-torchvision.models.swin_transformer.swin_b()

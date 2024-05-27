@@ -1,24 +1,37 @@
 import torch
 
+from utils import get_project_root
+
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+RESULTS_DIR = get_project_root() / "results"
 
 
-def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None):
+def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classifiers=1):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.train()
     for batch, (X, y) in enumerate(dataloader):
-        optimizer.zero_grad()
         X = X.to(DEVICE)
         y = y.to(DEVICE)
-        # Compute prediction and loss
-        pred = model(X)
-        loss = loss_fn(pred, y)
 
-        # Backpropagation
-        loss.backward()
-        optimizer.step()
+        # Compute prediction and loss
+        if num_classifiers == 1:
+            optimizer.zero_grad()
+            pred = model(X)
+            loss = loss_fn(pred, y)
+            # Backpropagation
+            loss.backward()
+            optimizer.step()
+        else:  # handles multiple classifiers, by doing a gradient descent on each of them
+            preds = model(X)[:num_classifiers]
+            loss = 0
+            for pred in reversed(preds):
+                optimizer.zero_grad()
+                single_loss = loss_fn(pred, y) * 1
+                single_loss.backward()
+                optimizer.step()
+                loss += single_loss.item()
 
         if batch % 20 == 0:
             loss, current = loss.item(), batch * dataloader.batch_size + len(X)
@@ -29,7 +42,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None):
 
 
 # this is copied from pytorch tutorial, seems general enough
-def test_loop(dataloader, model, loss_fn):
+def test_loop(dataloader, model, loss_fn, num_classifiers=1):
     # Set the model to evaluation mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.eval()
@@ -43,7 +56,10 @@ def test_loop(dataloader, model, loss_fn):
         for X, y in dataloader:
             X = X.to(DEVICE)
             y = y.to(DEVICE)
-            pred = model(X)
+            if num_classifiers == 1:
+                pred = model(X)
+            else:
+                pred = model(X)[num_classifiers]  # the last loss is the loss of the concat classifier
             test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
