@@ -1,4 +1,5 @@
 import torch
+import wandb
 
 from utils import get_project_root
 
@@ -6,7 +7,7 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 RESULTS_DIR = get_project_root() / "results"
 
 
-def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classifiers=1):
+def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classifiers=1, log=False):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
@@ -34,13 +35,15 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
         if batch % 20 == 0:
             loss, current = loss.item(), batch * dataloader.batch_size + len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+        if log:
+            wandb.log({"train/loss": loss})
 
     if scheduler:
         scheduler.step()
 
 
 # this is copied from pytorch tutorial, seems general enough
-def test_loop(dataloader, model, loss_fn, num_classifiers=1):
+def test_loop(dataloader, model, loss_fn, num_classifiers=1, log=False):
     # Set the model to evaluation mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.eval()
@@ -63,4 +66,6 @@ def test_loop(dataloader, model, loss_fn, num_classifiers=1):
 
     test_loss /= num_batches
     correct /= size
+    if log:
+        wandb.log({"val/accuracy": correct, "val/loss": test_loss})
     print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")

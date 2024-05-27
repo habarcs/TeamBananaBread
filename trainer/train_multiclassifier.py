@@ -1,6 +1,7 @@
 from torch import nn, optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchvision import transforms
+import wandb
 
 from datasets.dataset_fetch import get_fgvca_train_data_loader, get_fgvca_test_data_loader
 from models.multclassifiers1 import build_model
@@ -27,6 +28,9 @@ def main():
     train_loader = get_fgvca_train_data_loader(transforms=transform_train, batch_size=BATCH_SIZE, num_workers=4)
     test_loader = get_fgvca_test_data_loader(transforms=transform_test, batch_size=BATCH_SIZE, num_workers=4)
     model = build_model(number_of_classes=len(train_loader.dataset.classes), device=DEVICE)
+    wandb.login()
+    wandb.init(project="TeamBananaBread")
+    wandb.watch(model)
 
     CELoss = nn.CrossEntropyLoss()
     optimizer = optim.SGD([
@@ -46,8 +50,8 @@ def main():
 
     for epoch in range(EPOCHS):
         print(f"Epoch {epoch + 1}\n-------------------------------")
-        train_loop(train_loader, model, CELoss, optimizer, scheduler, num_classifiers=4)
-        test_loop(test_loader, model, CELoss)
+        train_loop(train_loader, model, CELoss, optimizer, scheduler, num_classifiers=4, log=True)
+        test_loop(test_loader, model, CELoss, log=True)
     print("Done!")
 
 
