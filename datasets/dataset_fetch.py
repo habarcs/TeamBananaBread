@@ -1,36 +1,29 @@
-"""
-This python package defines the dataloaders used for testing and training
-,.boygoyg
-"""
+from torch.utils.data import DataLoader
+from torchvision import datasets
+
 from utils import get_project_root
 
-from torchvision import datasets as built_in_datasets
-from torch.utils.data.dataset import Dataset, ConcatDataset
-
-DATA_DIR = get_project_root() / "data"
+DATA_SET_ROOT = get_project_root() / "data"
 
 
-def get_dataset() -> Dataset:
-    """
-    Creates a dataset that is a combination of multiple online datasets.
-    :return: concatenated dataset
-    """
-
-    fgvca = built_in_datasets.FGVCAircraft(
-        root=DATA_DIR,
-        download=True
+def get_fgvca_data_loader(transforms=None, target_transform=None, batch_size=64, num_workers=2):
+    trainval_data = datasets.FGVCAircraft(
+        root=DATA_SET_ROOT,
+        split="trainval",
+        annotation_level="variant",
+        download=True,
+        transform=transforms,
+        target_transform=target_transform,
     )
-    flowers = built_in_datasets.Flowers102(
-        root=DATA_DIR,
-        download=True
+    trainval_dataloader = DataLoader(trainval_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+
+    test_data = datasets.FGVCAircraft(
+        root=DATA_SET_ROOT,
+        split="test",
+        annotation_level="variant",
+        download=True,
+        transform=transforms,
+        target_transform=target_transform
     )
-    food = built_in_datasets.Food101(
-        root=DATA_DIR,
-        download=True
-    )
-
-    return ConcatDataset([fgvca, flowers, food])
-
-
-if __name__ == '__main__':
-    get_dataset()
+    test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    return trainval_dataloader, test_dataloader

@@ -6,6 +6,8 @@ from torch import nn
 from torchvision import models, datasets, transforms
 from torch.utils.data import DataLoader
 
+from datasets.dataset_fetch import get_fgvca_data_loader
+from trainer import train_loop, test_loop
 from utils import get_project_root
 
 DATA_SET_ROOT = get_project_root() / "data"
@@ -20,25 +22,8 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 image_transformer = models.AlexNet_Weights.DEFAULT.transforms()
 
-trainval_data = datasets.FGVCAircraft(
-    root=DATA_SET_ROOT,
-    split="trainval",
-    annotation_level="variant",
-    download=True,
-    transform=image_transformer,
-    target_transform=None
-)
-trainval_dataloader = DataLoader(trainval_data, batch_size=ALEX_NET_OG_BATCH_SIZE, shuffle=True)
-
-test_data = datasets.FGVCAircraft(
-    root=DATA_SET_ROOT,
-    split="test",
-    annotation_level="variant",
-    download=True,
-    transform=image_transformer,
-    target_transform=None
-)
-test_dataloader = DataLoader(test_data, batch_size=ALEX_NET_OG_BATCH_SIZE, shuffle=True)
+trainval_dataloader, test_dataloader = get_fgvca_data_loader(transforms=image_transformer,
+                                                             batch_size=ALEX_NET_OG_BATCH_SIZE)
 
 # we load the alexnet model with pretrained weights
 alex_net = models.alexnet(
@@ -60,54 +45,6 @@ alex_net.classifier = nn.Sequential(
     nn.ReLU(inplace=True),
     nn.Linear(4096, NUMBER_OF_CLASSES),
 )
-
-
-# this is copied from pytorch tutorial, seems general enough
-def train_loop(dataloader, model, loss_fn, optimizer):
-    size = len(dataloader.dataset)
-    # Set the model to training mode - important for batch normalization and dropout layers
-    # Unnecessary in this situation but added for best practices
-    model.train()
-    for batch, (X, y) in enumerate(dataloader):
-        X.to(DEVICE)
-        y.to(DEVICE)
-        # Compute prediction and loss
-        pred = model(X)
-        loss = loss_fn(pred, y)
-
-        # Backpropagation
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
-
-        if batch % 10 == 0:
-            loss, current = loss.item(), batch * dataloader.batch_size + len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-
-
-# this is copied from pytorch tutorial, seems general enough
-def test_loop(dataloader, model, loss_fn):
-    # Set the model to evaluation mode - important for batch normalization and dropout layers
-    # Unnecessary in this situation but added for best practices
-    model.eval()
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    test_loss, correct = 0, 0
-
-    # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
-    # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
-    with torch.no_grad():
-        for X, y in dataloader:
-            X.to(DEVICE)
-            y.to(DEVICE)
-            pred = model(X)
-            test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-
-    test_loss /= num_batches
-    correct /= size
-    print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-
 
 # Now comes the training
 loss_fn = nn.CrossEntropyLoss()
