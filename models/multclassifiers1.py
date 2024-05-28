@@ -1,32 +1,31 @@
-import torch
-import torchvision
-from torchvision.models import ResNet50_Weights
+from torch import nn, cat
+from torchvision.models import ResNet50_Weights, resnet50
 from torchvision.models.feature_extraction import create_feature_extractor
 
 
-class ConvolutionBlock(torch.nn.Module):
+class ConvolutionBlock(nn.Module):
     def __init__(self, in_channel, out_channels, kernel_size, padding):
         super().__init__()
-        self.conv = torch.nn.Conv2d(in_channel, out_channels, kernel_size, stride=1, padding=padding)
-        self.batch_normalization = torch.nn.BatchNorm2d(out_channels, eps=1e-5, momentum=0.01, affine=True)
-        self.relu = torch.nn.ReLU()
+        self.conv = nn.Conv2d(in_channel, out_channels, kernel_size, stride=1, padding=padding)
+        self.batch_normalization = nn.BatchNorm2d(out_channels, eps=1e-5, momentum=0.01, affine=True)
+        self.relu = nn.ReLU()
 
-    def forward(self,x):
+    def forward(self, x):
         return self.relu(self.batch_normalization(self.conv(x)))
 
 
-class FeatureClassifier(torch.nn.Module):
+class FeatureClassifier(nn.Module):
     def __init__(self, max_pool_kernel, in_channel, out_channel, num_classes):
         super().__init__()
-        self.max_pool = torch.nn.MaxPool2d(max_pool_kernel, stride=1)
+        self.max_pool = nn.MaxPool2d(max_pool_kernel, stride=1)
         self.conv1 = ConvolutionBlock(in_channel, out_channel, kernel_size=1, padding=0)
-        self.conv2 = ConvolutionBlock(out_channel, 2*out_channel, kernel_size=3, padding=1)
-        self.classifier = torch.nn.Sequential(
-            torch.nn.BatchNorm1d(2*out_channel),
-            torch.nn.Linear(2*out_channel, out_channel),
-            torch.nn.BatchNorm1d(out_channel),
-            torch.nn.ELU(),
-            torch.nn.Linear(out_channel, num_classes)
+        self.conv2 = ConvolutionBlock(out_channel, 2 * out_channel, kernel_size=3, padding=1)
+        self.classifier = nn.Sequential(
+            nn.BatchNorm1d(2 * out_channel),
+            nn.Linear(2 * out_channel, out_channel),
+            nn.BatchNorm1d(out_channel),
+            nn.ELU(),
+            nn.Linear(out_channel, num_classes)
         )
 
     def forward(self, x):
@@ -38,10 +37,10 @@ class FeatureClassifier(torch.nn.Module):
         return x
 
 
-class MultiClassifier(torch.nn.Module):
+class MultiClassifier(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        self.resnet = torchvision.models.resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
         for param in self.resnet.parameters(True):
             param.requires_grad = False
         return_nodes = {
@@ -77,16 +76,16 @@ class MultiClassifier(torch.nn.Module):
                 "num_classes": num_classes
             },
         }
-        self.classifiers = {}
+        self.classifiers = nn.ModuleDict()
         for node in return_nodes:
             self.classifiers[node] = FeatureClassifier(**parameters[node])
 
-        self.concat_classifier = torch.nn.Sequential(
-            torch.nn.BatchNorm1d(num_classes * 4),
-            torch.nn.Linear(num_classes * 4, 512),
-            torch.nn.BatchNorm1d(512),
-            torch.nn.ELU(),
-            torch.nn.Linear(512, num_classes),
+        self.concat_classifier = nn.Sequential(
+            nn.BatchNorm1d(num_classes * 4),
+            nn.Linear(num_classes * 4, 512),
+            nn.BatchNorm1d(512),
+            nn.ELU(),
+            nn.Linear(512, num_classes),
         )
 
     def forward(self, x):
@@ -95,6 +94,6 @@ class MultiClassifier(torch.nn.Module):
         for node, feature_map in extracted_maps.items():
             out.append(self.classifiers[node](feature_map))
 
-        cat_out = self.concat_classifier(torch.cat(out, -1))
+        cat_out = self.concat_classifier(cat(out, -1))
 
         return *out, cat_out
