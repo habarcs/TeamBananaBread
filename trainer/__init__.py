@@ -12,11 +12,11 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.train()
-    correct = 0
     for batch, (X, y) in enumerate(dataloader):
         X = X.to(DEVICE)
         y = y.to(DEVICE)
         total_loss = 0
+        correct = 0
         # Compute prediction and loss
         if num_classifiers == 1:
             pred = model(X)
@@ -34,18 +34,17 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
                 optimizer.step()
                 optimizer.zero_grad()
                 total_loss += loss.item()
+                if i == num_classifiers - 1:  # the last classifier is the main classifier, only take accuracy here
+                    correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-
+        correct /= len(y)
         if batch % 20 == 0:
             loss, current = total_loss, batch * dataloader.batch_size + len(X)
-            print(f"loss: {total_loss:>7f}  [{current:>5d}/{size:>5d}]")
+            print(f"loss: {total_loss:>7f}, acc: {(100 * correct):>0.1f}%,  [{current:>5d}/{size:>5d}]")
 
         if log:
-            wandb.log({"train/loss": loss})
+            wandb.log({"train/loss": total_loss, "train/acc": correct})
 
-    correct /= size
-    print(f"Train Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {total_loss:>8f} \n")
     if scheduler:
         scheduler.step()
 

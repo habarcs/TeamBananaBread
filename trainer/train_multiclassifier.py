@@ -10,7 +10,7 @@ BATCH_SIZE = 16
 EPOCHS = 5
 
 
-def main():
+def main(wandb_active=True):
     transform_train = transforms.Compose([
         transforms.Resize((550, 550)),
         transforms.RandomCrop(448, padding=8),
@@ -30,9 +30,10 @@ def main():
 
     model = MultiClassifier(num_classes)
     model.to(DEVICE)
-    wandb.login()
-    wandb.init(project="TeamBananaBread")
-    wandb.watch(model)
+    if wandb_active:
+        wandb.login()
+        wandb.init(project="TeamBananaBread")
+        wandb.watch(model)
 
     CELoss = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
@@ -44,8 +45,8 @@ def main():
 
     for epoch in range(EPOCHS):
         print(f"Epoch {epoch + 1}\n-------------------------------")
-        train_loop(train_loader, model, CELoss, optimizer, scheduler, num_classifiers=5, log=True)
-        test_loop(test_loader, model, CELoss, log=True, num_classifiers=5)
+        train_loop(train_loader, model, CELoss, optimizer, scheduler, num_classifiers=5, log=wandb_active)
+        test_loop(test_loader, model, CELoss, log=wandb_active, num_classifiers=5)
     print("Done!")
 
 
