@@ -11,32 +11,37 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.train()
+    correct = 0
     for batch, (X, y) in enumerate(dataloader):
         X = X.to(DEVICE)
         y = y.to(DEVICE)
-
+        total_loss = 0
         # Compute prediction and loss
         if num_classifiers == 1:
             optimizer.zero_grad()
             pred = model(X)
             loss = loss_fn(pred, y)
-        else:  # handles multiple classifiers, by doing a gradient descent on each of them
-            preds = model(X)[:num_classifiers]
-            loss = torch.tensor(0.0).to(DEVICE)
-            for pred in reversed(preds):
+        else: 
+            for i in range(num_classifiers):
+                pred = model(X)[i]
+                loss = loss_fn(pred, y)
+                loss.backward()
+                optimizer.step()
                 optimizer.zero_grad()
-                loss += loss_fn(pred, y)
+                total_loss += loss.item()
 
-        # Backpropagation
-        loss.backward()
-        optimizer.step()
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+
 
         if batch % 20 == 0:
             loss, current = loss.item(), batch * dataloader.batch_size + len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            print(f"loss: {total_loss:>7f}  [{current:>5d}/{size:>5d}]")
+
         if log:
             wandb.log({"train/loss": loss})
 
+    correct /= size
+    print(f"Train Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {total_loss:>8f} \n")
     if scheduler:
         scheduler.step()
 
