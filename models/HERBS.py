@@ -12,7 +12,7 @@ class HERBS(nn.Module):
         self.backbone = swin_v2_t(weights=Swin_V2_T_Weights.DEFAULT)
         for parameter in self.backbone.parameters(recurse=True):
             parameter.requires_grad = False
-        self.backbone.head = nn.Linear(1024, number_of_classes)
+        self.backbone.head = nn.Linear(768, number_of_classes)
 
     def forward(self, x):
         return self.backbone(x)

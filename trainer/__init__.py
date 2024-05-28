@@ -6,6 +6,7 @@ from utils import get_project_root
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 RESULTS_DIR = get_project_root() / "results"
 
+
 def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classifiers=1, log=False):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
@@ -18,10 +19,14 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
         total_loss = 0
         # Compute prediction and loss
         if num_classifiers == 1:
-            optimizer.zero_grad()
             pred = model(X)
             loss = loss_fn(pred, y)
-        else: 
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+            total_loss = loss.item()
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+        else:
             for i in range(num_classifiers):
                 pred = model(X)[i]
                 loss = loss_fn(pred, y)
@@ -32,9 +37,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
 
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
-
         if batch % 20 == 0:
-            loss, current = loss.item(), batch * dataloader.batch_size + len(X)
+            loss, current = total_loss, batch * dataloader.batch_size + len(X)
             print(f"loss: {total_loss:>7f}  [{current:>5d}/{size:>5d}]")
 
         if log:
@@ -64,7 +68,7 @@ def test_loop(dataloader, model, loss_fn, num_classifiers=1, log=False):
             if num_classifiers == 1:
                 pred = model(X)
             else:
-                pred  = model(X)[num_classifiers-1]
+                pred = model(X)[num_classifiers - 1]
                 test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
