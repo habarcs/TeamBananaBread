@@ -1,15 +1,10 @@
+from datasets.dataset_fetch import get_birds_train_data_loader, get_birds_test_data_loader
+from models.multclassifiers1 import MultiClassifier
+from trainer import DEVICE, train_loop, test_loop
 from torch import nn, optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchvision import transforms
 import wandb
-
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
-from datasets.dataset_fetch import get_birds_train_data_loader, get_birds_test_data_loader
-from datasets.dataset_fetch import get_flowers_train_data_loader, get_flowers_test_data_loader
-from models.multclassifiers1 import build_model
-from trainer import DEVICE, train_loop, test_loop
 
 BATCH_SIZE = 16
 EPOCHS = 5
@@ -30,32 +25,27 @@ def main():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
     train_loader = get_birds_train_data_loader(transforms=transform_train, batch_size=BATCH_SIZE, num_workers=4)
-    test_loader, num_classes = get_birds_test_data_loader(transforms=transform_test, batch_size=BATCH_SIZE, num_workers=4)
-    model = build_model(number_of_classes=num_classes, device=DEVICE)
+    test_loader, num_classes = \
+        get_birds_test_data_loader(transforms=transform_test, batch_size=BATCH_SIZE, num_workers=4)
+
+    model = MultiClassifier(num_classes)
+    model.to(DEVICE)
     wandb.login()
     wandb.init(project="TeamBananaBread")
     wandb.watch(model)
 
     CELoss = nn.CrossEntropyLoss()
-    optimizer = optim.SGD([
-        {'params': model.classifier_concat.parameters(), 'lr': 0.002},
-        {'params': model.conv_block1.parameters(), 'lr': 0.002},
-        {'params': model.classifier1.parameters(), 'lr': 0.002},
-        {'params': model.conv_block2.parameters(), 'lr': 0.002},
-        {'params': model.classifier2.parameters(), 'lr': 0.002},
-        {'params': model.conv_block3.parameters(), 'lr': 0.002},
-        {'params': model.classifier3.parameters(), 'lr': 0.002},
-        {'params': model.Features.parameters(), 'lr': 0.0002}  # not used as resnet is not trained
-
-    ],
+    optimizer = optim.SGD(
+        params=model.parameters(True),
+        lr=0.002,
         momentum=0.9,
         weight_decay=5e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=30)
 
     for epoch in range(EPOCHS):
         print(f"Epoch {epoch + 1}\n-------------------------------")
-        train_loop(train_loader, model, CELoss, optimizer, scheduler, num_classifiers=4, log=True)
-        test_loop(test_loader, model, CELoss, log=True, num_classifiers=4)
+        train_loop(train_loader, model, CELoss, optimizer, scheduler, num_classifiers=5, log=True)
+        test_loop(test_loader, model, CELoss, log=True, num_classifiers=5)
     print("Done!")
 
 
