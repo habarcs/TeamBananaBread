@@ -6,7 +6,6 @@ from utils import get_project_root
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 RESULTS_DIR = get_project_root() / "results"
 
-
 def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classifiers=1, log=False):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
@@ -23,7 +22,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
             loss = loss_fn(pred, y)
         else:  # handles multiple classifiers, by doing a gradient descent on each of them
             preds = model(X)[:num_classifiers]
-            loss = torch.tensor(0.0)
+            loss = torch.tensor(0.0).to(DEVICE)
             for pred in reversed(preds):
                 optimizer.zero_grad()
                 loss += loss_fn(pred, y)
@@ -60,8 +59,8 @@ def test_loop(dataloader, model, loss_fn, num_classifiers=1, log=False):
             if num_classifiers == 1:
                 pred = model(X)
             else:
-                pred = model(X)[num_classifiers]  # the last loss is the loss of the concat classifier
-            test_loss += loss_fn(pred, y).item()
+                pred  = model(X)[num_classifiers-1]
+                test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
     test_loss /= num_batches
