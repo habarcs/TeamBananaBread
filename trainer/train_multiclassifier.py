@@ -6,7 +6,7 @@ import wandb
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
-
+from datasets.dataset_fetch import get_birds_train_data_loader, get_birds_test_data_loader
 from datasets.dataset_fetch import get_flowers_train_data_loader, get_flowers_test_data_loader
 from models.multclassifiers1 import build_model
 from trainer import DEVICE, train_loop, test_loop
@@ -29,8 +29,8 @@ def main():
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
-    train_loader = get_flowers_train_data_loader(transforms=transform_train, batch_size=BATCH_SIZE, num_workers=4)
-    test_loader, num_classes = get_flowers_test_data_loader(transforms=transform_test, batch_size=BATCH_SIZE, num_workers=4)
+    train_loader = get_birds_train_data_loader(transforms=transform_train, batch_size=BATCH_SIZE, num_workers=4)
+    test_loader, num_classes = get_birds_test_data_loader(transforms=transform_test, batch_size=BATCH_SIZE, num_workers=4)
     model = build_model(number_of_classes=num_classes, device=DEVICE)
     wandb.login()
     wandb.init(project="TeamBananaBread")
