@@ -5,8 +5,7 @@ import wandb
 from datasets.dataset_fetch import get_fgvca_train_data_loader, get_fgvca_test_data_loader
 from models.HERBS import HERBS
 from trainer import DEVICE, train_loop, test_loop
-
-EPOCHS = 50
+EPOCHS = 300
 BATCH_SIZE = 32
 
 
@@ -21,8 +20,8 @@ def main():
 
     # Now comes the training
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.AdamW(model.parameters(), lr=1e-2, weight_decay=1e-4, amsgrad=False)
-    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=50, eta_min=1e-7, last_epoch=-1)
+    optimizer = optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-7)
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=20, eta_min=1e-7, last_epoch=-1)
 
     for t in range(EPOCHS):
         print(f"Epoch {t + 1}\n-------------------------------")
