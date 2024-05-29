@@ -11,8 +11,8 @@ BATCH_SIZE = 32
 
 def main(wandb_active=True):
     train_loader = get_fgvca_train_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
-    test_loader, _ = get_fgvca_test_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
-    model = HERBS(len(train_loader.dataset.classes))
+    test_loader, num_classes = get_fgvca_test_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
+    model = HERBS(num_classes)
     model.to(DEVICE)
     if wandb_active:
         wandb.login()
