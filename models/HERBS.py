@@ -48,7 +48,7 @@ class HERBS(nn.Module):
     def forward(self, x):
         features = self.features(x)
         out = [self.suppressors[node](feature_map) for node, feature_map in features.items()]
-        selected_features = torch.cat([o[1] for o in out], dim=1)
+        selected_features = torch.cat([o[1].squeeze(-1) for o in out], dim=-1)
         return self.classifier(selected_features)
 
     def get_feature_dims(self):
