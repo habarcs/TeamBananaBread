@@ -17,9 +17,9 @@ class ConvolutionBlock(nn.Module):
 class FeatureClassifier(nn.Module):
     def __init__(self, max_pool_kernel, in_channel, out_channel, num_classes):
         super().__init__()
-        self.max_pool = nn.MaxPool2d(max_pool_kernel, stride=1)
         self.conv1 = ConvolutionBlock(in_channel, out_channel, kernel_size=1, padding=0)
         self.conv2 = ConvolutionBlock(out_channel, 2 * out_channel, kernel_size=3, padding=1)
+        self.max_pool = nn.MaxPool2d(max_pool_kernel, stride=1)
         self.classifier = nn.Sequential(
             nn.BatchNorm1d(2 * out_channel),
             nn.Linear(2 * out_channel, out_channel),
@@ -29,12 +29,12 @@ class FeatureClassifier(nn.Module):
         )
 
     def forward(self, x):
-        x = self.max_pool(x)
         x = self.conv1(x)
         x = self.conv2(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        return x
+        x = self.max_pool(x)
+        feature = x.view(x.size(0), -1)
+        pred_class = self.classifier(feature)
+        return pred_class, feature
 
 
 class MultiClassifier(nn.Module):
@@ -83,8 +83,8 @@ class MultiClassifier(nn.Module):
             self.classifiers[node] = FeatureClassifier(**parameters[node])
 
         self.concat_classifier = nn.Sequential(
-            nn.BatchNorm1d(num_classes * 4),
-            nn.Linear(num_classes * 4, 512),
+            nn.BatchNorm1d(1024 * 4),
+            nn.Linear(1024 * 4, 512),
             nn.BatchNorm1d(512),
             nn.ELU(),
             nn.Linear(512, num_classes),
@@ -92,10 +92,13 @@ class MultiClassifier(nn.Module):
 
     def forward(self, x):
         extracted_maps = self.features(x)
-        out = []
+        class_pred_out = []
+        feature_out = []
         for node, feature_map in extracted_maps.items():
-            out.append(self.classifiers[node](feature_map))
+            pred, feature = self.classifiers[node](feature_map)
+            class_pred_out.append(pred)
+            feature_out.append(feature)
 
-        cat_out = self.concat_classifier(cat(out, -1))
+        cat_out = self.concat_classifier(cat(feature_out, -1))
 
-        return *out, cat_out
+        return *class_pred_out, cat_out
