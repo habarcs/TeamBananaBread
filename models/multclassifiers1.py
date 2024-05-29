@@ -79,6 +79,9 @@ class MultiClassifier(nn.Module):
         self.classifiers = nn.ModuleDict()
         for node in return_nodes:
             self.classifiers[node] = FeatureClassifier(**parameters[node])
+            for param in self.classifiers[node].max_pool.parameters():
+                param.requires_grad = False
+            
 
         self.concat_classifier = nn.Sequential(
             nn.BatchNorm1d(num_classes * 4),
