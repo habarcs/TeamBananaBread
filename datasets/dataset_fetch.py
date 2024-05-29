@@ -3,7 +3,7 @@ from torchvision import datasets
 from datasets.cub200 import Cub2011
 from utils import get_project_root
 
-DATA_SET_ROOT = get_project_root() / "data"
+DATA_SET_ROOT = get_project_root().parent / "data"  # being outside the project makes it easier to sync to remote
 
 
 def get_fgvca_train_data_loader(transforms=None, target_transform=None, batch_size=64, num_workers=2):
