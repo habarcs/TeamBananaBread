@@ -32,6 +32,7 @@ def get_fgvca_test_data_loader(transforms=None, target_transform=None, batch_siz
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     return test_dataloader, num_classes
 
+
 def get_flowers_train_data_loader(transforms=None, target_transform=None, batch_size=64, num_workers=2):
     trainval_data = datasets.Flowers102(
         root=DATA_SET_ROOT,
@@ -56,8 +57,9 @@ def get_flowers_test_data_loader(transforms=None, target_transform=None, batch_s
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     return test_dataloader, num_classes
 
+
 def get_birds_train_data_loader(transforms=None, batch_size=64, num_workers=2):
-    trainval_data = Cub2011(root = DATA_SET_ROOT,
+    trainval_data = Cub2011(root=DATA_SET_ROOT,
                             train=True,
                             transform=transforms,
                             download=True)
@@ -66,10 +68,10 @@ def get_birds_train_data_loader(transforms=None, batch_size=64, num_workers=2):
 
 
 def get_birds_test_data_loader(transforms=None, target_transform=None, batch_size=64, num_workers=2):
-    test_data = Cub2011(root = DATA_SET_ROOT,
-                            train=False,
-                            transform=transforms,
-                            download=True)
+    test_data = Cub2011(root=DATA_SET_ROOT,
+                        train=False,
+                        transform=transforms,
+                        download=True)
     num_classes = 200
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     return test_dataloader, num_classes

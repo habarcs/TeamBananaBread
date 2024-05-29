@@ -9,14 +9,15 @@ EPOCHS = 300
 BATCH_SIZE = 32
 
 
-def main():
+def main(wandb_active=True):
     train_loader = get_fgvca_train_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
-    test_loader, _ = get_fgvca_test_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
-    model = HERBS(len(train_loader.dataset.classes))
+    test_loader, num_classes = get_fgvca_test_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
+    model = HERBS(num_classes)
     model.to(DEVICE)
-    wandb.login()
-    wandb.init(project="TeamBananaBread")
-    wandb.watch(model)
+    if wandb_active:
+        wandb.login()
+        wandb.init(project="TeamBananaBread")
+        wandb.watch(model)
 
     # Now comes the training
     loss_fn = nn.CrossEntropyLoss()
@@ -25,8 +26,8 @@ def main():
 
     for t in range(EPOCHS):
         print(f"Epoch {t + 1}\n-------------------------------")
-        train_loop(train_loader, model, loss_fn, optimizer=optimizer, scheduler=scheduler, log=True)
-        test_loop(test_loader, model, loss_fn, log=True)
+        train_loop(train_loader, model, loss_fn, optimizer=optimizer, scheduler=scheduler, log=wandb_active)
+        test_loop(test_loader, model, loss_fn, log=wandb_active)
     print("Done!")
 
 

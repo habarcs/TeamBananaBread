@@ -38,6 +38,8 @@ class FeatureClassifier(nn.Module):
 
 
 class MultiClassifier(nn.Module):
+    transforms = ResNet50_Weights.DEFAULT.transforms
+
     def __init__(self, num_classes):
         super().__init__()
         self.resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
