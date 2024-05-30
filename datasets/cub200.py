@@ -3,12 +3,10 @@ import pandas as pd
 from torchvision.datasets.folder import default_loader
 from torchvision.datasets.utils import download_url
 from torch.utils.data import Dataset
-from utils import get_project_root
 
-DATA_SET_ROOT = get_project_root() / "data"
 
 class Cub2011(Dataset):
-    base_folder = DATA_SET_ROOT/'CUB_200_2011/images'
+    base_folder = 'CUB_200_2011/images'
     url = 'https://data.caltech.edu/records/65de6-vp158/files/CUB_200_2011.tgz'
     filename = 'CUB_200_2011.tgz'
     tgz_md5 = '97eceeb196236b17998738112f37df78'

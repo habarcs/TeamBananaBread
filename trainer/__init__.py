@@ -32,6 +32,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
                 loss = loss_fn(pred, y)
                 if i==num_classifiers-1:
                     loss = loss * 2
+                if log:
+                    wandb.log({f"train/cl{i}_loss": loss.item()})
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
