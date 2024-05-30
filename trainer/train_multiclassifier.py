@@ -54,7 +54,7 @@ def main(wandb_active=True, load_name=None):
     for epoch in range(EPOCHS):
         print(f"Epoch {epoch + 1}\n-------------------------------")
         train_loop(train_loader, model, CELoss, optimizer, scheduler, num_classifiers=num_classifiers, log=wandb_active)
-        test_loop(test_loader, model, CELoss, log=wandb_active, num_classifiers=num_classifiers)
+        test_loop(test_loader, model, CELoss, log=wandb_active)
     print("Done!")
 
 
