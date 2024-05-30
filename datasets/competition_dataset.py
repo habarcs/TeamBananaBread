@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List
 
 from torch.utils.data import Dataset
 from torchvision.io import read_image
@@ -10,22 +9,21 @@ class CompetitionTrainingDataset(Dataset):
         self.transforms = transforms
         if not isinstance(data_directory, Path):
             data_directory = Path(data_directory)
-        self.image_directory = data_directory / "train" / "images"
-        label_directory = data_directory / "train" / "labels"
-        # TODO handle label read and fix classes ###
-        self.labels: List[dict] = []
-        self.classes = {label["label"] for label in self.labels}
+        self.train_dir = data_directory / "train"
+        self.labels = []
+        self.classes = list({clx.name for clx in self.train_dir.iterdir()})
+        for clx in self.train_dir.iterdir():
+            for image in clx.iterdir():
+                self.labels.append((image.name, clx.name))
 
     def __getitem__(self, idx):
-        # TODO MAYBE HANDLE IMAGE NAME RESOLUTION
-        image_name = self.labels[idx]["name"]
-        # TODO handle label acquisition
-        label = self.labels[idx]["label"]
+        image_name, class_name = self.labels[idx]
+        class_id = self.classes.index(class_name)
 
-        img = read_image(self.image_directory / image_name)
+        img = read_image(self.train_dir / class_name / image_name)
         if self.transforms:
             img = self.transforms(img)
-        return img, label
+        return img, class_id
 
     def __len__(self):
         return len(self.labels)
@@ -36,15 +34,15 @@ class CompetitionTestingDataset(Dataset):
         self.transforms = transforms
         if not isinstance(data_directory, Path):
             data_directory = Path(data_directory)
-        self.image_directory = data_directory / "test" / "images"
-        self.files = list(self.image_directory.iterdir())
+        self.test_directory = data_directory / "test"
+        self.files = list(self.test_directory.iterdir())
 
     def __getitem__(self, idx):
         image_name = self.files[idx]
-        img = read_image(self.image_directory / image_name)
+        img = read_image(self.test_directory / image_name)
         if self.transforms:
             img = self.transforms(img)
-        return img, image_name
+        return img, image_name.stem
 
     def __len__(self):
         return len(self.files)
