@@ -6,7 +6,7 @@ from datasets.dataset_fetch import get_fgvca_train_data_loader, get_fgvca_test_d
 from models.HERBS import HERBS
 from trainer import DEVICE, train_loop, test_loop
 EPOCHS = 300
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 
 
 def main(wandb_active=True):
@@ -26,7 +26,8 @@ def main(wandb_active=True):
 
     for t in range(EPOCHS):
         print(f"Epoch {t + 1}\n-------------------------------")
-        train_loop(train_loader, model, loss_fn, optimizer=optimizer, scheduler=scheduler, log=wandb_active)
+        train_loop(train_loader, model, loss_fn, optimizer=optimizer, scheduler=scheduler, log=wandb_active,
+                   num_classifiers=5)
         test_loop(test_loader, model, loss_fn, log=wandb_active)
     print("Done!")
 
