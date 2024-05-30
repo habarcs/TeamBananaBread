@@ -30,6 +30,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
             for i in range(num_classifiers):
                 pred = model(X)[i]
                 loss = loss_fn(pred, y)
+                if i==num_classifiers-1:
+                    loss = loss * 2
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()

@@ -1,12 +1,13 @@
 from torch import nn, cat
-from torchvision.models import ResNet50_Weights, resnet50
+from torchvision.models import resnet50
 from torchvision.models.feature_extraction import create_feature_extractor
+from torch.hub import load_state_dict_from_url
 
 
 class ConvolutionBlock(nn.Module):
     def __init__(self, in_channel, out_channels, kernel_size, padding):
         super().__init__()
-        self.conv = nn.Conv2d(in_channel, out_channels, kernel_size, stride=1, padding=padding)
+        self.conv = nn.Conv2d(in_channel, out_channels, kernel_size, stride=1, padding=padding,bias =False)
         self.batch_normalization = nn.BatchNorm2d(out_channels, eps=1e-5, momentum=0.01, affine=True)
         self.relu = nn.ReLU()
 
@@ -38,19 +39,22 @@ class FeatureClassifier(nn.Module):
 
 
 class MultiClassifier(nn.Module):
-    transforms = ResNet50_Weights.DEFAULT.transforms
 
     def __init__(self, num_classes):
         super().__init__()
-        self.resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
+        net = resnet50()
+        state_dict = load_state_dict_from_url('https://download.pytorch.org/models/resnet50-19c8e357.pth')
+        net.load_state_dict(state_dict)
+        self.resnet = net
         for param in self.resnet.parameters(True):
             param.requires_grad = False
         return_nodes = {
-            'layer1': 'layer1',
+            # 'layer1': 'layer1',
             'layer2': 'layer2',
             'layer3': 'layer3',
             'layer4': 'layer4',
         }
+        num_classifiers = len(return_nodes)
         self.features = create_feature_extractor(self.resnet, return_nodes)
         parameters = {
             'layer1': {
@@ -86,11 +90,11 @@ class MultiClassifier(nn.Module):
             
 
         self.concat_classifier = nn.Sequential(
-            nn.BatchNorm1d(1024 * 4),
-            nn.Linear(1024 * 4, 512),
+            nn.BatchNorm1d(1024 * num_classifiers),
+            nn.Linear(1024 * num_classifiers, 512),
             nn.BatchNorm1d(512),
             nn.ELU(),
-            nn.Linear(512, num_classes),
+            nn.Linear(512, num_classes)
         )
 
     def forward(self, x):
