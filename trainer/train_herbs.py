@@ -1,18 +1,22 @@
+import torch
 from torch import nn, optim
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 import wandb
 
 from datasets.dataset_fetch import get_fgvca_train_data_loader, get_fgvca_test_data_loader
 from models.HERBS import HERBS
-from trainer import DEVICE, train_loop, test_loop
+from trainer import DEVICE, train_loop, test_loop, RESULTS_DIR
+
 EPOCHS = 300
 BATCH_SIZE = 16
 
 
-def main(wandb_active=True):
-    train_loader = get_fgvca_train_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
-    test_loader, num_classes = get_fgvca_test_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
+def main(wandb_active=True, load_name=None):
+    train_loader, num_classes = get_fgvca_train_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
+    test_loader = get_fgvca_test_data_loader(transforms=HERBS.transforms(), batch_size=BATCH_SIZE)
     model = HERBS(num_classes)
+    if load_name:
+        model.load_state_dict(torch.load(RESULTS_DIR / load_name))
     model.to(DEVICE)
     if wandb_active:
         wandb.login()

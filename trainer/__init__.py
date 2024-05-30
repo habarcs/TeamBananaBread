@@ -7,7 +7,7 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 RESULTS_DIR = get_project_root() / "results"
 
 
-def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classifiers=1, log=False):
+def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classifiers=1, log=False, save_name=None):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
@@ -48,6 +48,9 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler=None, num_classi
     if scheduler:
         scheduler.step()
 
+    if save_name:
+        torch.save(model.state_dict(), RESULTS_DIR / save_name)
+
 
 # this is copied from pytorch tutorial, seems general enough
 def test_loop(dataloader, model, loss_fn, log=False):
@@ -66,7 +69,7 @@ def test_loop(dataloader, model, loss_fn, log=False):
             y = y.to(DEVICE)
             pred = model(X)
             if isinstance(pred, tuple):
-                pred = model(X)[-1]
+                pred = pred[-1]
             test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 

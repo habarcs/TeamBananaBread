@@ -1,0 +1,34 @@
+import requests
+import json
+
+import torch
+
+from trainer import DEVICE
+
+
+def submit(results, url="https://competition-production.up.railway.app/results/"):
+    res = json.dumps(results)
+    response = requests.post(url, res)
+    try:
+        result = json.loads(response.text)
+        print(f"accuracy is {result['accuracy']}")
+    except json.JSONDecodeError:
+        print(f"ERROR: {response.text}")
+
+
+def competition_test_loop(model, dataloader):
+    model.eval()
+    preds = {}
+    with torch.no_grad():
+        for img, img_name in dataloader:
+            img = img.to(DEVICE)
+            pred = model(img)
+            if isinstance(pred, tuple):
+                pred = pred[-1]
+            preds[img_name]: pred.argmax(1).item()
+
+    res = {
+        "images": preds,
+        "groupname": "TeamBananaBread"
+    }
+    submit(res)
