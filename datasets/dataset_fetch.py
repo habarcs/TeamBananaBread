@@ -80,7 +80,7 @@ def get_birds_test_data_loader(transforms=None, batch_size=64, num_workers=2):
 
 def get_comp_train_data_loader(data_directory, transforms=None, batch_size=64, num_workers=2):
     # TODO fix data directory
-    trainval_data = CompetitionTrainingDataset(data_directory="", transforms=transforms)
+    trainval_data = CompetitionTrainingDataset(data_directory=data_directory, transforms=transforms)
     trainval_dataloader = DataLoader(trainval_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     num_classes = len(trainval_data.classes)
     return trainval_dataloader, num_classes
@@ -88,5 +88,5 @@ def get_comp_train_data_loader(data_directory, transforms=None, batch_size=64, n
 
 def get_comp_test_data_loader(data_directory, transforms=None):
     # TODO fix data directory
-    test_data = CompetitionTestingDataset(data_directory="", transforms=transforms)
+    test_data = CompetitionTestingDataset(data_directory=data_directory, transforms=transforms)
     return test_data

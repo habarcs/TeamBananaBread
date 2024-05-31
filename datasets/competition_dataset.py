@@ -1,7 +1,8 @@
 from pathlib import Path
 
+import torch
 from torch.utils.data import Dataset
-from torchvision.io import read_image
+from PIL import Image
 
 
 class CompetitionTrainingDataset(Dataset):
@@ -18,12 +19,12 @@ class CompetitionTrainingDataset(Dataset):
 
     def __getitem__(self, idx):
         image_name, class_name = self.labels[idx]
-        class_id = self.classes[self.classes.index(class_name)].split('_')[0]
+        class_id = self.classes.index(class_name)
 
-        img = read_image(self.train_dir / class_name / image_name)
+        img = Image.open(str(self.train_dir / class_name / image_name))
         if self.transforms:
             img = self.transforms(img)
-        return img, class_id
+        return img, torch.tensor(class_id)
 
     def __len__(self):
         return len(self.labels)
@@ -39,7 +40,7 @@ class CompetitionTestingDataset(Dataset):
 
     def __getitem__(self, idx):
         image_name = self.files[idx]
-        img = read_image(self.test_directory / image_name)
+        img = Image.open((str(self.test_directory / image_name)))
         if self.transforms:
             img = self.transforms(img)
         return img, image_name.stem

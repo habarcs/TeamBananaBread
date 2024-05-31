@@ -2,8 +2,10 @@ import timm, pandas
 from torch import nn, optim
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR
 import wandb
+
+from competition.submit import competition_test_loop
 from datasets.dataset_fetch import get_fgvca_train_data_loader, get_fgvca_test_data_loader, get_birds_test_data_loader, \
-    get_birds_train_data_loader
+    get_birds_train_data_loader, get_comp_train_data_loader, get_comp_test_data_loader
 from trainer import DEVICE, train_loop, test_loop
 from torchvision import transforms
 print(timm.list_models('*swin*'))
@@ -25,9 +27,9 @@ transform_test = transforms.Compose([
 
 
 def main(wandb_active=True):
-    train_loader = get_birds_train_data_loader(transforms=transform_train, batch_size=BATCH_SIZE, num_workers=4)
-    test_loader, num_classes = \
-        get_birds_test_data_loader(transforms=transform_test, batch_size=BATCH_SIZE, num_workers=4)
+    train_loader, num_classes = get_comp_train_data_loader(data_directory="/home/disi/competition_data", transforms=transform_train, batch_size=BATCH_SIZE)
+    test_loader = \
+        get_comp_test_data_loader(data_directory="/home/disi/competition_data", transforms=transform_test)
 
     model2 = timm.create_model('swin_tiny_patch4_window7_224', num_classes = num_classes, pretrained=True)
 
@@ -58,7 +60,7 @@ def main(wandb_active=True):
     for t in range(EPOCHS):
         print(f"Epoch {t + 1}\n-------------------------------")
         train_loop(train_loader, model, loss_fn, optimizer=optimizer, scheduler=scheduler, log=wandb_active)
-        test_loop(test_loader, model, loss_fn, log=wandb_active)
+        competition_test_loop(test_loader, model, train_loader.dataset.classes)
     print("Done!")
 
 
