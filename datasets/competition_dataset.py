@@ -18,7 +18,7 @@ class CompetitionTrainingDataset(Dataset):
 
     def __getitem__(self, idx):
         image_name, class_name = self.labels[idx]
-        class_id = self.classes.index(class_name)
+        class_id = self.classes[self.classes.index(class_name)].split('_')[0]
 
         img = read_image(self.train_dir / class_name / image_name)
         if self.transforms:
