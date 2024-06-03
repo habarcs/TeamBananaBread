@@ -26,7 +26,7 @@ def competition_test_loop(model, dataloader, classes):
             if isinstance(pred, tuple):
                 pred = pred[-1]
             pred_id = pred.argmax(1).item()
-            preds[img_id]: classes[pred_id]
+            preds[img_id] = classes[pred_id].split('_')[0]
 
     res = {
         "images": preds,

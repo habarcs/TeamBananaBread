@@ -43,7 +43,7 @@ class CompetitionTestingDataset(Dataset):
         img = Image.open((str(self.test_directory / image_name)))
         if self.transforms:
             img = self.transforms(img)
-        return img, image_name.stem
+        return img.unsqueeze(0), image_name.name
 
     def __len__(self):
         return len(self.files)

@@ -35,8 +35,6 @@ def main(wandb_active=True):
 
     #89% in 10 epochs [Resize(450) test images followed by CenterCrop(384), lr=1e-5, wd=1e-7, AdamW]
     model = timm.create_model('swin_base_patch4_window12_384', num_classes = num_classes, pretrained=True)
-    for param in model.parameters():
-        param.requires_grad = False
 
     #images divided in squared patches of 4x4 pixels
     #attention window size 7x7 meaning that every token(patch) could be influenced by max 7 neighbors tokens
@@ -60,7 +58,7 @@ def main(wandb_active=True):
     for t in range(EPOCHS):
         print(f"Epoch {t + 1}\n-------------------------------")
         train_loop(train_loader, model, loss_fn, optimizer=optimizer, scheduler=scheduler, log=wandb_active)
-        competition_test_loop(test_loader, model, train_loader.dataset.classes)
+        competition_test_loop(model, test_loader, train_loader.dataset.classes)
     print("Done!")
 
 
