@@ -1,3 +1,6 @@
+"""
+This module defines the dataset used for the competition
+"""
 from pathlib import Path
 
 import torch
@@ -39,6 +42,9 @@ class CompetitionTestingDataset(Dataset):
         self.files = list(self.test_directory.iterdir())
 
     def __getitem__(self, idx):
+        """
+        instead of returning the image and the label we return the image and the name for the submission purposes
+        """
         image_name = self.files[idx]
         img = Image.open((str(self.test_directory / image_name)))
         if self.transforms:

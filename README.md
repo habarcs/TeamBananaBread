@@ -2,15 +2,9 @@
 Machine learning class project at Unitn.
 
 ## Project
-The models are in the models directory, each model is its own python file. Common functionality can be extracted to a seperate file or to `models/__init__.py`
+The models are described in the models directory, each model is its own python file. Common functionality can be extracted to a separate file or to `models/__init__.py`
 
-The requirements.txt file contains all the dependencies of the project, if you add a new dependency please update it. (For now it only includes the cpu version of pytorch.)
-A way to do this is to print your current pip packages to the requirements.txt file:
-```bash
-    # make sure your environment is activated and you
-    # are in the root directory
-    pip3 freeze > requirements.txt
-```
+The requirements.txt file contains all the dependencies of the project.
 
 To install the dependencies in your virtual environment run the following commands from the root directory of the project:
 ```bash
@@ -24,16 +18,17 @@ To install the dependencies in your virtual environment run the following comman
     # install project in editable mode
     pip install -r requirements.txt
 ```
+For faster synchronization to the virtual machine, it may be a good idea to store the venv outside the project directory.
 
 ### Datasets
-All data is stored in the `data/` directory, the datasets module is responsible for downloading and loading the data.
+All data is stored in the `../data/` directory; for easier synchronization of the code it is outside the project directory.
+The datasets module is responsible for downloading and loading the data, here each dataset used is defined in its own file.
+All dataloaders are defined in `datasets/data_fetch.py`
 
-### Code quality
-Before commiting always format code with an autoformatter.
-In pycharm  Ctrl+Alt+L on Windows and Linux or ⌘⌥L on macOS.
-
-Also check for lint errors with pylint or the built-in linter.
-On github after every commit, pylint is run, try to fix all errors before merging.
+### Training
+The main training logic is defined in the `trainer` package. `trainer.__init__.py` contains the main training and test loops.
+For each model there is a specific file for its training, this is the entrypoint of the code.
+Models are saved in the `results` directory.
 
 ## Assignment: Fine-grained classification
 Fine-grained classification in Neural Networks for Computer Vision
@@ -62,9 +57,8 @@ the classification task and to learn from a
 diverse set of examples to generalize better to
 unseen data.
 
-# Research papers
-- [Fine-grained classification survey](https://arxiv.org/pdf/2111.06119)
-- [Another survey, maybe easier to understand](https://www.zhaobo.me/papers/ijac_survey.pdf)
-- [Awesome Fine-Grained Image Analysis](http://www.weixiushen.com/project/Awesome_FGIA/Awesome_FGIA.html)
-- [Github page for FGIA](https://github.com/arkel23/AFGIC)
-- [Papers with code, methods, data, very useful website](https://paperswithcode.com/task/fine-grained-image-classification)
+### Authors
+Maria Starodubtseva
+Francesco di Massimo
+Ricardo Esquivel
+Márton Hévizi

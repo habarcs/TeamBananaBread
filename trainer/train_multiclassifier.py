@@ -1,5 +1,7 @@
+"""
+Module for training the MariaNet, resnet with multiple classifiers
+"""
 import torch
-
 
 from datasets.dataset_fetch import get_birds_train_data_loader, get_birds_test_data_loader
 from models.multclassifiers1 import MultiClassifier
@@ -33,7 +35,7 @@ def main(wandb_active=True, load_name=None):
         get_birds_test_data_loader(transforms=transform_test, batch_size=BATCH_SIZE, num_workers=4)
 
     model = MultiClassifier(num_classes)
-    num_classifiers = len(model.classifiers) + 1 
+    num_classifiers = len(model.classifiers) + 1
     if load_name:
         model.load_state_dict(torch.load(RESULTS_DIR / load_name))
 

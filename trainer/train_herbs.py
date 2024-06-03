@@ -1,6 +1,8 @@
+"""
+Module for training the swin model with background suppression
+"""
 import torch
 from torch import nn, optim
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 import wandb
 
 from datasets.dataset_fetch import get_birds_train_data_loader, get_birds_test_data_loader

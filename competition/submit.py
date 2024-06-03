@@ -1,3 +1,6 @@
+"""
+This module handles the competition submission and test loop, where the test labels are not available
+"""
 import requests
 import json
 
@@ -23,8 +26,10 @@ def competition_test_loop(model, dataloader, classes):
         for img, img_id in dataloader:
             img = img.to(DEVICE)
             pred = model(img)
-            if isinstance(pred, tuple):
+            try:
                 pred = pred[-1]
+            except TypeError:
+                pass
             pred_id = pred.argmax(1).item()
             preds[img_id] = classes[pred_id].split('_')[0]
 

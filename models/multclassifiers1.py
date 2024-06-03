@@ -5,9 +5,13 @@ from torch.hub import load_state_dict_from_url
 
 
 class ConvolutionBlock(nn.Module):
+    """
+    this convolution block processes the features of each resnet layer further
+    """
+
     def __init__(self, in_channel, out_channels, kernel_size, padding):
         super().__init__()
-        self.conv = nn.Conv2d(in_channel, out_channels, kernel_size, stride=1, padding=padding,bias =False)
+        self.conv = nn.Conv2d(in_channel, out_channels, kernel_size, stride=1, padding=padding, bias=False)
         self.batch_normalization = nn.BatchNorm2d(out_channels, eps=1e-5, momentum=0.01, affine=True)
         self.relu = nn.ReLU()
 
@@ -16,6 +20,12 @@ class ConvolutionBlock(nn.Module):
 
 
 class FeatureClassifier(nn.Module):
+    """
+    The feature classifier takes in an input from resnet, a feature, processes it via the convolution blocks,
+    these processed features are then fed into a classifier and are trained on the image label.
+    This way each processor learns the features that are most important to the domain problem
+    """
+
     def __init__(self, max_pool_kernel, in_channel, out_channel, num_classes):
         super().__init__()
         self.conv1 = ConvolutionBlock(in_channel, out_channel, kernel_size=1, padding=0)
@@ -39,6 +49,9 @@ class FeatureClassifier(nn.Module):
 
 
 class MultiClassifier(nn.Module):
+    """
+    This combines the feature classifiers with each of the RESNET layers
+    """
 
     def __init__(self, num_classes):
         super().__init__()
@@ -87,7 +100,6 @@ class MultiClassifier(nn.Module):
             self.classifiers[node] = FeatureClassifier(**parameters[node])
             for param in self.classifiers[node].max_pool.parameters():
                 param.requires_grad = False
-            
 
         self.concat_classifier = nn.Sequential(
             nn.BatchNorm1d(1024 * num_classifiers),

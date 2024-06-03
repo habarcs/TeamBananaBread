@@ -1,4 +1,5 @@
 """
+inspired by HERBS architecture, combining the swin transformer with background suppression
 """
 import torch
 from torchvision.ops import Permute
@@ -9,6 +10,10 @@ from torch import nn
 
 
 class WSS(nn.Module):
+    """
+    The background suppressor, chooses the most discriminative patches based on its own classifier called fc
+    and returns those selected embeddings after a dimensionality reduction, to lower embedding size
+    """
     def __init__(self, in_embedding_size: int, num_classes: int, num_selects: int, out_embedding_size: int):
         super().__init__()
         self.fc = nn.Linear(in_embedding_size, num_classes)
@@ -35,6 +40,11 @@ class WSS(nn.Module):
 
 
 class HERBS(nn.Module):
+    """
+    The HERBS module is a swin transformer combined with background suppressor modules,
+    For each of the 4 blocks of the swin transformer the bg suppressor chooses the most discriminant
+    patches which in turn are fed into a final classifier
+    """
     transforms_train = Compose([
         Resize(size=510, interpolation=InterpolationMode.BICUBIC, max_size=None, antialias=True),
         RandomCrop(size=(384, 384)),

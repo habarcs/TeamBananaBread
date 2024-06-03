@@ -1,3 +1,6 @@
+"""
+common module for defining dataloaders, the train dataloader also returns the number of classes of the dataset
+"""
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from datasets.cub200 import Cub2011

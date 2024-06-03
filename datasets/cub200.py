@@ -1,3 +1,6 @@
+"""
+Datasets for the CUB200 bird images
+"""
 import os
 import pandas as pd
 from torchvision.datasets.folder import default_loader
