@@ -4,3 +4,4 @@ torchvision
 pylint
 pillow
 timm
+scipy

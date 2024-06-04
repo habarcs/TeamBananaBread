@@ -2,7 +2,7 @@
 Machine learning class project at Unitn.
 
 ## Project
-The models are described in the models directory, each model is its own python file. Common functionality can be extracted to a separate file or to `models/__init__.py`
+The models are described in the models directory, each model is its own python file. Common functionality can be extracted to a separate file or to `models/__init__.py`. The two models we built is an architecture based on ResNet with multiple classifiers found in `models/multclassifiers1.py`, the other is SWIN with background suppression inspired by HERBS found in the `models/HERBS.py` file
 
 The requirements.txt file contains all the dependencies of the project.
 

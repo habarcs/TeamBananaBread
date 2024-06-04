@@ -38,16 +38,28 @@ def get_fgvca_test_data_loader(transforms=None, target_transform=None, batch_siz
 
 
 def get_flowers_train_data_loader(transforms=None, target_transform=None, batch_size=64, num_workers=2):
-    trainval_data = datasets.Flowers102(
+    train_data = datasets.Flowers102(
         root=DATA_SET_ROOT,
         split="train",
         download=True,
         transform=transforms,
         target_transform=target_transform,
     )
-    num_classes = len(set(trainval_data._labels))
-    trainval_dataloader = DataLoader(trainval_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    return trainval_dataloader, num_classes
+    num_classes = len(set(train_data._labels))
+    train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    return train_dataloader, num_classes
+
+
+def get_flowers_val_data_loader(transforms=None, target_transform=None, batch_size=64, num_workers=2):
+    val_data= datasets.Flowers102(
+        root=DATA_SET_ROOT,
+        split="val",
+        download=True,
+        transform=transforms,
+        target_transform=target_transform,
+    )
+    val_dataloader = DataLoader(val_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    return val_dataloader
 
 
 def get_flowers_test_data_loader(transforms=None, target_transform=None, batch_size=64, num_workers=2):
