@@ -65,8 +65,6 @@ class HERBS(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
         self.backbone = create_model("swin_base_patch4_window12_384", pretrained=True, features_only=True)
-        for param in self.backbone.parameters(True):
-            param.requires_grad = False
 
         num_selects = [32, 32, 32, 32]  # the number of features we select at each stage
         self.suppressors = nn.ModuleList()
